@@ -187,8 +187,14 @@ and images in a multipart/related part."
          "src=\"cid:%s\""
          (let* ((url (and (string-match "src=\"\\([^\"]+\\)\"" text)
                           (match-string 1 text)))
-                (path (expand-file-name
-                       url temporary-file-directory))
+                ;; (path (expand-file-name
+                ;;        url temporary-file-directory))
+                ;; (path (expand-file-name url))
+                (path
+                 (if
+                     ;; Strip the file:// protocol to use the absolute file name instead
+                     (string-match-p "^file:///" url) (replace-regexp-in-string "^file://" "" url)
+                   (expand-file-name url (file-name-directory current-file))))
                 (ext (file-name-extension path))
                 (id (replace-regexp-in-string "[\/\\\\]" "_" path)))
            (add-to-list 'html-images
@@ -577,3 +583,9 @@ htmlize :: Generate html of SCOPE using a the `htmlize' library."
 (provide 'org-mime)
 
 ;;; org-mime.el ends here
+;; Use org-mime to send email
+;; org-mime subtree grabs subject and TO, but keeps the metadata/property drawer
+
+;; TODO This function isn't pulling subject and other
+;; props from subtree for some reason
+

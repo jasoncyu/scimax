@@ -35,7 +35,11 @@
 
 (use-package org-bullets)
 
+(use-package org-edna
+  :init (org-edna-load))
+
 ;; * Other packages
+(use-package diminish)
 
 (use-package aggressive-indent
   :config (add-hook 'emacs-lisp-mode-hook #'aggressive-indent-mode))
@@ -481,6 +485,10 @@
   :ensure nil
   :load-path scimax-dir
   :bind ( "<f9>" . hotspots))
+
+(use-package bibtex-hotkeys
+  :ensure nil
+  :load-path scimax-dir)
 
 (use-package ox-manuscript
   :ensure nil

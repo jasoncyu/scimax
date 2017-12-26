@@ -825,27 +825,15 @@ that case the process that ipython uses appears to be default."
 (org-link-set-parameters
  "async-running"
  :follow (lambda (path)
-	   (ob-ipython-kill-kernel
-	    (cdr
-	     (assoc
-	      (org-babel-get-session)
-	      (ob-ipython--get-kernel-processes))))
+	   (org-babel-goto-named-src-block path)
+	   (nuke-ipython) 
 	   (save-excursion
 	     (org-babel-previous-src-block)
 	     (org-babel-remove-result))
-	   ;; clear the blocks in the queue.
-	   (loop for (buffer . name)
-		 in (ob-ipython-queue)
-		 do
-		 (save-window-excursion
-		   (with-current-buffer buffer
-		     (org-babel-goto-named-src-block name)
-		     (org-babel-remove-result))))
-
 	   (ob-ipython-set-running-cell nil)
 	   (setf (ob-ipython-queue) nil))
  :face '(:foreground "green4")
- :help-echo "Running")
+ :help-echo "Click to kill kernel")
 
 ;;** src block text properties
 
@@ -892,9 +880,8 @@ that case the process that ipython uses appears to be default."
           (ob-ipython-set-running-cell cell)
           (ob-ipython-log "Setting up %S to run." cell)
           (let* ((running-link (format
-                                "[[async-running: %s %s]]"
-                                (org-babel-src-block-get-property 'org-babel-ipython-name)
-                                (org-babel-src-block-get-property 'org-babel-ipython-result-type)))
+                                "[[async-running: %s]]"
+                                (org-babel-src-block-get-property 'org-babel-ipython-name)))
                  (info (org-babel-get-src-block-info))
                  (params (third info))
                  (body
@@ -979,10 +966,13 @@ It replaces the output in the results."
                                          (cdr (ob-ipython-get-running)))
                                         (org-babel-remove-result)))
                                     json))))
+	 ;; If there are images, they will be in result
          (result (cdr (assoc :result ret)))
+	 ;; If there is printed output, it will be in output
          (output (cdr (assoc :output ret)))
          info params result-params result-mime-type
          current-cell name
+	 (image-p nil)
          (result-type))
 
     (with-current-buffer (car args)
@@ -997,35 +987,42 @@ It replaces the output in the results."
         (setq params (third info))
         (setq result-params (cdr (assoc :result-params params)))
         (setq result-mime-type (cdr (assoc :ob-ipython-results params)))
+	(when result-mime-type
+	  (setq result (-filter (lambda (e) (eq (car e) (intern result-mime-type))) result)))
         (org-babel-remove-result)
         (cond
          ((string= "output" result-type)
-          (let (image-p)
-            (-when-let (res (or (when (not (s-blank-str? output))
-                                  (format "#+BEGIN_EXAMPLE\n%s\n#+END_EXAMPLE\n" output))
-                                (-when-let (vals (-filter (lambda (e) (eq (car e) 'text/org)) result))
-                                  (mapconcat #'cdr vals "\n\n"))
-                                (-when-let* ((vals (-filter (lambda (e) (eq (car e) 'text/plain)) result))
-                                             (joined (mapconcat #'cdr vals "\n"))
-                                             (not-plot-p (not (s-contains? "<matplotlib.figure.Figure" joined))))
-                                  (format "#+BEGIN_EXAMPLE\n%s\n#+END_EXAMPLE\n" joined))
-                                (-when-let (vals (-filter (lambda (e) (eq (car e) 'image/png)) result))
-                                  (setq image-p t)
-                                  (mapconcat (lambda (e) (ob-ipython-inline-image (cdr e))) vals "\n"))
-                                (-when-let (vals (-filter (lambda (e) (eq (car e) 'text/latex)) result))
-                                  (format "#+BEGIN_LATEX\n%s\n#+END_LATEX\n" (mapconcat #'cdr vals "\n")))
-                                (-when-let (vals (-filter (lambda (e) (eq (car e) 'text/html)) result))
-                                  (mapconcat #'cdr vals "\n"))))
-              (org-babel-insert-result res result-params))
-            (when image-p (org-redisplay-inline-images))))
-         ((string= "value" result-type)
-          (let ((res (ob-ipython--format-result
-                      result result-mime-type)))
-            (when (not (s-blank-str? res))
-              (org-babel-insert-result (s-chomp (s-chop-prefix "\n" res)) result-params info))
-            ;; If result contains image, redisplay the images
-            (when (s-contains? "[[file:" res)
-              (org-redisplay-inline-images))))))
+	  (let ((res (mapconcat
+		      'identity
+		      (-remove
+		       'null
+		       (list
+			(when (not (s-blank? output))
+			  (format "#+BEGIN_EXAMPLE\n%s#+END_EXAMPLE\n" output))
+			(-when-let (vals (-filter (lambda (e) (eq (car e) 'text/org)) result))
+			  (mapconcat #'cdr vals "\n\n"))
+			(-when-let* ((vals (-filter (lambda (e) (eq (car e) 'text/plain)) result))
+				     (joined (mapconcat #'cdr vals "\n"))
+				     (not-plot-p (not (s-contains? "<matplotlib.figure.Figure" joined))))
+			  (format "#+BEGIN_EXAMPLE\n%s\n#+END_EXAMPLE\n" joined))
+			(-when-let (vals (-filter (lambda (e) (eq (car e) 'image/png)) result))
+			  (setq image-p t)
+			  (mapconcat (lambda (e) (ob-ipython-inline-image (cdr e))) vals "\n"))
+			(-when-let (vals (-filter (lambda (e) (eq (car e) 'text/latex)) result))
+			  (format "#+BEGIN_LATEX\n%s\n#+END_LATEX\n" (mapconcat #'cdr vals "\n")))
+			(-when-let (vals (-filter (lambda (e) (eq (car e) 'text/html)) result))
+			  (mapconcat #'cdr vals "\n"))))
+		      "\n")))
+	    (org-babel-insert-result res result-params)
+	    (when image-p (org-redisplay-inline-images))))
+	 ((string= "value" result-type)
+	  (let ((res (ob-ipython--format-result
+		      result result-mime-type)))
+	    (when (not (s-blank-str? res))
+	      (org-babel-insert-result (s-chomp (s-chop-prefix "\n" res)) result-params info))
+	    ;; If result contains image, redisplay the images
+	    (when (s-contains? "[[file:" res)
+	      (org-redisplay-inline-images))))))
       (ob-ipython-set-running-cell nil)
       (setq header-line-format (format "The kernel is %s" (ob-ipython-get-kernel-name))))
 
@@ -1112,6 +1109,7 @@ It replaces the output in the results."
 	  (when (get-buffer buf)
 	    (kill-buffer buf)))))
 
+
 (defun org-in-ipython-block-p (&optional inside)
   "Whether point is in a code source block.
 When INSIDE is non-nil, don't consider we are within a src block
@@ -1122,6 +1120,7 @@ when point is at #+BEGIN_SRC or #+END_SRC."
              (save-excursion
                (beginning-of-line)
                (looking-at-p ".*#\\+\\(begin\\|end\\)_src ipython"))))))
+
 
 (defun scimax-execute-ipython-block ()
   "Execute the block at point.

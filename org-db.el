@@ -6,21 +6,25 @@
 (require 'org)
 (require 'emacsql-sqlite)
 
+;;; Code:
+
 (defcustom org-db-root "~/org-db/"
   "Root directory for db files."
   :group 'org-db)
 
 (defcustom org-db-name "org-db.sqlite"
-  "Name of the sqlite database file")
+  "Name of the sqlite database file."
+  :group 'org-db)
 
 (defcustom org-db-index-content nil
-  "Controls if the content of headlines is saved.")
+  "Controls if the content of headlines is saved."
+  :group 'org-db)
 
 (unless (file-directory-p org-db-root)
   (make-directory org-db-root t))
 
-(defvar org-db (emacsql-sqlite (expand-file-name org-db-name org-db-root))                 
-  "Variable for the org-db connection.")
+(defvar org-db (emacsql-sqlite (expand-file-name org-db-name org-db-root))
+  "Variable for the ‘org-db’ connection.")
 
 (defvar org-db-queue '()
   "A list of files that need to be updated.")
@@ -32,16 +36,16 @@
   "A list of regexps of files (including their path) to ignore.")
 
 (defvar org-db-ignore-tags '()
-  "A list of tags to exclude from the database")
+  "A list of tags to exclude from the database.")
 
 (defvar org-db-ignore-properties '("RESULT")
-  "A list of properties to exclude from the database")
+  "A list of properties to exclude from the database.")
 
 (defvar org-db-ignore-keywords '( )
-  "A list of keywords to exclude from the database")
+  "A list of keywords to exclude from the database.")
 
 (defvar org-db-debug nil
-  "if non-nil log messages.")
+  "If non-nil log messages.")
 
 (setq org-db-debug t)
 
@@ -63,9 +67,9 @@
 (org-db-log "Started org-db")
 
 ;; create the tables if we need to.
-(progn 
+(progn
   (emacsql org-db [:PRAGMA (= foreign_keys 1)])
-  
+
   (emacsql org-db [:create-table :if :not :exists files
 				 ([(rowid integer :primary-key)
 				   (filename text :unique)
@@ -84,7 +88,7 @@
 				 ([(rowid integer :primary-key)
 				   (keyword text :unique)])])
 
-  (emacsql org-db [:create-table :if :not :exists headlines 
+  (emacsql org-db [:create-table :if :not :exists headlines
 				 ([(rowid integer :primary-key)
 				   (filename-id integer :not :null)
 				   (title text :not :null)
@@ -98,7 +102,7 @@
 				   (tags text)
 				   (priority text)]
 				  (:foreign-key [filename-id] :references files [rowid]
-						:on-delete :cascade))]) 
+						:on-delete :cascade))])
 
   (emacsql org-db [:create-table :if :not :exists headline-tags
 				 ([(rowid integer :primary-key)
@@ -151,7 +155,7 @@
 
 
 (defun org-db-get-filename-id (fname)
-  "Returns the rowid corresponding to FNAME.
+  "Return the rowid corresponding to FNAME.
 Adds FNAME to the database if it doesn't exist."
   (org-db-connect)
   (or
@@ -190,13 +194,14 @@ Adds FNAME to the database if it doesn't exist."
 
 
 (defun org-db-update-buffer (&optional force)
-  "Update the entries in the database for the currently visited buffer."
+  "Update the entries in the database for the currently visited buffer.
+Optional argument FORCE. if non-nil force the buffer to be added."
   (interactive "P")
   (org-db-connect)
   (save-buffer)
   (org-db-log "Updating in buffer: %s" (buffer-file-name))
   (org-with-wide-buffer
-   (when (or force 
+   (when (or force
 	     (and
 	      ;; file does not match an ignore pattern
 	      (and org-db-ignore-file-regexps
@@ -222,7 +227,7 @@ Adds FNAME to the database if it doesn't exist."
 	    (parse-tree (org-element-parse-buffer))
 	    (links (org-element-map parse-tree 'link
 		     (lambda (link)
-		       (vector 
+		       (vector
 			nil
 			filename-id
 			(org-element-property :type link)
@@ -232,7 +237,7 @@ Adds FNAME to the database if it doesn't exist."
 			    (buffer-substring-no-properties
 			     (org-element-property :contents-begin link)
 			     (org-element-property :contents-end link))
-			  "")			   
+			  "")
 			(org-element-property :search-option link)
 			(org-element-property :begin link)))))
 	    (ba (-split-at 400 links))
@@ -252,17 +257,17 @@ Adds FNAME to the database if it doesn't exist."
 	    tags
 	    properties
 	    tag-id)
-       
+
        ;; update the md5
        (emacsql org-db [:update files :set (= md5 $s1) :where (= rowid $s2)]
-		(md5 (buffer-string)) filename-id)       
-       
+		(md5 (buffer-string)) filename-id)
+
        ;; * delete old links
        (emacsql org-db [:delete :from links :where (= links:filename-id $s1)] filename-id)
 
-       ;;  ** add new links 
-       (while handle 
-	 (emacsql org-db [:insert :into links :values $v1] handle) 
+       ;;  ** add new links
+       (while handle
+	 (emacsql org-db [:insert :into links :values $v1] handle)
 	 (setq ba (-split-at 400 next)
 	       handle (nth 0 ba)
 	       next (nth 1 ba)))
@@ -272,7 +277,7 @@ Adds FNAME to the database if it doesn't exist."
        (emacsql org-db [:delete :from file-keywords
 				:where (= file-keywords:filename-id $s1)]
 		filename-id)
-       
+
        (loop for (keyword value begin) in keywords
 	     if (not (member keyword org-db-ignore-keywords))
 	     do
@@ -291,13 +296,13 @@ Adds FNAME to the database if it doesn't exist."
        ;; tags, properties and keywords.
        (emacsql org-db [:delete :from headlines :where (= headlines:filename-id $s1)]
 		filename-id)
-       
+
        (loop for hl in headlines do
 	     (save-excursion
-	       (goto-char (org-element-property :begin hl)) 
+	       (goto-char (org-element-property :begin hl))
 	       (setq tags (mapcar 'org-no-properties (org-get-tags-at))
 		     properties (org-entry-properties (org-element-property :begin hl) 'all)))
-	     
+
 	     (setq hlv (vector
 			nil
 			filename-id
@@ -325,38 +330,38 @@ Adds FNAME to the database if it doesn't exist."
 	     ;; insert headline row and get headline-id
 	     (emacsql org-db [:insert :into headlines :values $v1] hlv)
 	     (setq headline-id (caar (emacsql org-db
-					      [:select (funcall last-insert-rowid)]))) 
+					      [:select (funcall last-insert-rowid)])))
 
 	     ;; remove old tag data
 	     (emacsql org-db [:delete :from headline-tags
 				      :where (= headline-tags:headline-id $s1)]
 		      headline-id)
-	     
+
 	     (loop for tag in tags
 		   if (not (member tag org-db-ignore-tags))
-		   do 
+		   do
 		   (setq tag-id
 			 (or (caar (emacsql org-db [:select rowid :from tags
 							    :where (= tag $s1)]
 					    tag))
 			     (emacsql org-db [:insert :into tags :values [nil $s1]]
 				      tag)
-			     (caar (emacsql org-db [:select (funcall last-insert-rowid)])))) 
+			     (caar (emacsql org-db [:select (funcall last-insert-rowid)]))))
 		   (emacsql org-db [:insert :into headline-tags :values $v1]
 			    (vector nil headline-id tag-id)))
-	     
+
 	     ;; properties
 	     (emacsql org-db [:delete :from headline-properties
 				      :where (= headline-properties:headline-id $s1)]
 		      headline-id)
-	     
+
 	     (setq properties (save-excursion
 				(goto-char (org-element-property :begin hl))
 				(org-entry-properties)))
 
 	     (loop for (property . value) in properties
 		   if (not (member property org-db-ignore-properties))
-		   do 
+		   do
 		   (setq property-id
 			 (or
 			  (caar (emacsql org-db [:select rowid :from properties
@@ -366,12 +371,12 @@ Adds FNAME to the database if it doesn't exist."
 						   :values [nil $s1]]
 				   property)
 			  (caar (emacsql org-db [:select (funcall last-insert-rowid)]))))
-		   
+
 		   ;; and the values
 		   (emacsql org-db [:insert :into headline-properties
-					    :values [nil $s1 $s2 $s3]] 
+					    :values [nil $s1 $s2 $s3]]
 			    headline-id
-			    property-id 
+			    property-id
 			    (org-no-properties value))))
 
        (emacsql org-db [:update files :set (= last-updated $s1) :where (= rowid $s2)]
@@ -379,18 +384,18 @@ Adds FNAME to the database if it doesn't exist."
 
 
 (defun org-db-hook-function ()
-  "Function to run when org-mode starts."
+  "Function to run after starting ‘org-mode’."
   ;; Run when we open in case it changed from some external program. Only for
   ;; org and org_archive files, and not just when we enter org-mode for some
   ;; reason.
   (when (and (buffer-file-name)
 	     (or (f-ext? (buffer-file-name) "org")
 		 (f-ext? (buffer-file-name) "org_archive")))
-    
+
     (add-to-list 'org-db-queue (buffer-file-name) t)
     (org-db-log "added %s to the queue." (buffer-file-name))
 
-    ;; add local after save hook in case this is a new file. 
+    ;; add local after save hook in case this is a new file.
     (add-hook 'after-save-hook 'org-db-hook-function t t)))
 
 
@@ -401,13 +406,14 @@ Adds FNAME to the database if it doesn't exist."
 
 ;; * Idle timer to update
 
-(defun org-db-process-queue (&optional arg)
-  "Update all the files in `org-db-queue'."
+(defun org-db-process-queue (&optional now)
+  "Update all the files in `org-db-queue'.
+Use a prefix ARG to process now."
   (interactive "P")
   (org-db-connect)
   (catch 'done
     (while org-db-queue
-      (unless (or arg (current-idle-time))
+      (unless (or now (current-idle-time))
 	(throw 'done nil))
       (org-db-log "Updating org-db for files %s." org-db-queue)
       (let* ((filename (pop org-db-queue))
@@ -434,7 +440,7 @@ Adds FNAME to the database if it doesn't exist."
 
 (defun org-db-refresh (&optional force)
   "Update all the files in the database.
-Use a prefix arg to force updates."
+Use a prefix arg to FORCE updates."
   (interactive "P")
   (let* ((files (emacsql org-db [:select [filename] :from files :order-by rowid :asc]))
 	 (N (length files))
@@ -447,17 +453,18 @@ Use a prefix arg to force updates."
 	  (org-db-log "Refreshing %s of %s (%s)" i N fname)
 	  (setq already-open (find-buffer-visiting fname))
 	  (setq buf (find-file-noselect fname))
-	  (with-current-buffer buf 
+	  (with-current-buffer buf
 	    (condition-case err
 		(org-db-update-buffer force)
 	      (org-db-log "Error updating %s: %s" fname err)))
 	  (unless already-open (kill-buffer buf))
-	  else 
+	  else
 	  do (emacsql org-db [:delete :from files :where (= filename $s1)] fname))))
 
 
 (defun org-db-index (path  &optional recursive)
-  "Index all the org-files in PATH."
+  "Index all the org-files in PATH.
+Optional RECURSIVE is non-nil find files recursively."
   (interactive (list (read-directory-name "Path: ")
 		     current-prefix-arg))
   (let* ((enable-local-variables nil)
@@ -475,10 +482,10 @@ Use a prefix arg to force updates."
 	  for i from 1
 	  do
 	  (message "%s of %s - %s" i N fname)
-	  (setq already-open (find-buffer-visiting fname)) 
+	  (setq already-open (find-buffer-visiting fname))
 	  (with-current-buffer (or already-open (setq buf (find-file-noselect fname)))
 	    (condition-case err
-		(org-db-update-buffer) 
+		(org-db-update-buffer)
 	      (message "Error updating %s: %s" fname err)))
 	  (unless already-open (kill-buffer buf)))))
 
@@ -524,14 +531,14 @@ Use a prefix arg to force updates."
 		    (action . (("Open location" . (lambda (candidate)
 						    (find-file (plist-get candidate :filename))
 						    (goto-char (plist-get candidate :begin))))
-			       ("Insert link" . (lambda (candidate) 
+			       ("Insert link" . (lambda (candidate)
 						  (let ((link))
 						    (with-current-buffer
 							(find-file-noselect
 							 (plist-get candidate :filename))
 						      (goto-char (plist-get candidate :begin))
 						      (setq link (format
-								  "[[location:%s][%s]]" (org-id-get-create) 
+								  "[[location:%s][%s]]" (org-id-get-create)
 								  (nth 4 (org-heading-components)))))
 						    (insert link))))))))))
 
@@ -540,7 +547,7 @@ Use a prefix arg to force updates."
 ;; * org-db-locations
 
 (defun org-db-locations-candidates ()
-  "Returns a list of headings with an ADDRESS property."
+  "Return a list of headings with an ADDRESS property."
   (let ((locations (emacsql org-db [:select [headlines:title headline-properties:value headlines:tags files:filename headlines:begin]
 					    :from headlines
 					    :inner :join headline-properties :on (=  headlines:rowid headline-properties:headline-id)
@@ -565,14 +572,14 @@ Use a prefix arg to force updates."
 		   :action '(("Open location" . (lambda (candidate)
 						  (find-file (plist-get candidate :filename))
 						  (goto-char (plist-get candidate :begin))))
-			     ("Insert link" . (lambda (candidate) 
+			     ("Insert link" . (lambda (candidate)
 						(let ((link))
 						  (with-current-buffer
 						      (find-file-noselect
 						       (plist-get candidate :filename))
 						    (goto-char (plist-get candidate :begin))
 						    (setq link (format
-								"[[location:%s][%s]]" (org-id-get-create) 
+								"[[location:%s][%s]]" (org-id-get-create)
 								(nth 4 (org-heading-components)))))
 						  (insert link))))))))
 
@@ -589,6 +596,7 @@ Use a prefix arg to force updates."
 
 ;; * org-db headlines
 (defun org-db-heading-candidates ()
+  "Return candidates for ivy or helm selection."
   (let* ((headings (emacsql org-db [:select [headlines:level headlines:title headlines:tags
 							     files:filename headlines:begin]
 					    :from headlines
@@ -598,7 +606,7 @@ Use a prefix arg to force updates."
 			   collect
 			   (cons
 			    (format "%100s|%20s|%s"
-				    (s-pad-right 100 " " (concat  (make-string level (string-to-char "*")) " " title)) 
+				    (s-pad-right 100 " " (concat  (make-string level (string-to-char "*")) " " title))
 				    (s-pad-right 20 " " (or tags ""))
 				    filename)
 			    (list
@@ -607,6 +615,7 @@ Use a prefix arg to force updates."
     candidates))
 
 (defun org-db-open-heading ()
+  "Use helm to select and open a heading."
   (interactive)
   (helm :sources (helm-build-sync-source "org-db-headlines"
 		   :candidates (org-db-heading-candidates)
@@ -633,14 +642,14 @@ Use a prefix arg to force updates."
 ;; * org-db files
 
 (defun org-db-open-file ()
-  "Open a file in org-db with completion."
+  "Open a file in ‘org-db’ with completion."
   (interactive)
   (find-file (completing-read "File: " (mapcar 'car (emacsql org-db [:select [filename]
 									     :from files
 									     :order :by filename])))))
 
 (defun org-db-open-recent-file ()
-  "Open a recent file in org-db with completion."
+  "Open a recent file in ‘org-db’ with completion."
   (interactive)
   (let ((candidates (mapcar (lambda (x)
 			      (cons (format "%s %s" (cdr x) (car x)) (car x)))

@@ -10,8 +10,9 @@
 
 ;;; Code:
 
-(setq use-package-always-ensure t)
+(add-to-list 'Info-directory-list scimax-dir)
 
+(setq use-package-always-ensure t)
 
 ;; * org-mode
 ;; load this first before anything else to avoid mixed installations
@@ -37,6 +38,7 @@
 
 (use-package org-edna
   :init (org-edna-load))
+
 
 ;; * Other packages
 (use-package diminish)
@@ -73,6 +75,7 @@
   ;; I am not currently using this, and it loads a bunch of files on startup.
   :disabled t)
 
+(use-package button-lock)
 
 ;; Potential for commandline scripts using emacs
 (use-package commander
@@ -83,6 +86,7 @@
 (use-package swiper
   :bind
   ("C-s" . counsel-grep-or-swiper)
+  ("H-s" . swiper-all)
   :diminish ivy-mode
   :config
   (ivy-mode))
@@ -102,11 +106,13 @@
   (("M-x" . counsel-M-x)
    ("C-x b" . ivy-switch-buffer)
    ("C-x C-f" . counsel-find-file)
+   ("C-x l" . counsel-locate)
    ("C-h f" . counsel-describe-function)
    ("C-h v" . counsel-describe-variable)
    ("C-h i" . counsel-info-lookup-symbol)
    ("H-c r" . ivy-resume)
    ("H-c l" . counsel-load-library)
+   ("H-c f" . counsel-git)
    ("H-c g" . counsel-git-grep)
    ("H-c a" . counsel-ag)
    ("H-c p" . counsel-pt))
@@ -114,7 +120,7 @@
   :config
   (progn
     (counsel-mode)
-
+    (define-key minibuffer-local-map (kbd "C-r") 'counsel-minibuffer-history)
     (define-key ivy-minibuffer-map (kbd "M-<SPC>") 'ivy-dispatching-done)
 
     ;; C-RET call and go to next
@@ -146,6 +152,7 @@
 	(ivy-exit-with-action
 	 (lambda (x) nil))))
 
+    ;; Show keys
     (define-key ivy-minibuffer-map (kbd "?")
       (lambda ()
 	(interactive)
@@ -158,6 +165,8 @@
 ;; Provides functions for working on lists
 (use-package dash)
 (use-package dash-functional)
+
+(use-package dashboard)
 
 (use-package elfeed)
 
@@ -175,7 +184,7 @@
 ;; pip install proselint
 (use-package flycheck
   ;; Jun 28 - I like this idea, but sometimes this is too slow.
-  :config 
+  :config
   (add-hook 'text-mode-hook #'flycheck-mode)
   (add-hook 'org-mode-hook #'flycheck-mode)
   (define-key flycheck-mode-map (kbd "s-;") 'flycheck-previous-error))
@@ -245,7 +254,7 @@
 	    (lambda ()
 	      (flyspell-mode +1)
 	      (flycheck-mode +1)))
-  
+
   :after flyspell
   :config
   (progn
@@ -256,6 +265,11 @@
 
 (use-package git-messenger
   :bind ("C-x v o" . git-messenger:popup-message))
+
+;; google-this
+(use-package google-this
+  :config
+  (google-this-mode 1))
 
 (use-package helm
   :init (setq helm-command-prefix-key "C-c h")
@@ -298,7 +312,8 @@
 
 (use-package helm-projectile)
 
-(use-package help-fns+)
+(use-package help-fns+
+  :load-path scimax-dir)
 
 ;; Functions for working with hash tables
 (use-package ht)
@@ -343,13 +358,22 @@
 ;; https://github.com/Wilfred/mustache.el
 (use-package mustache)
 
-;; this is a git submodule
-(use-package ob-ipython
+(use-package scimax-ob
   :ensure nil
-  :load-path (lambda () (expand-file-name "ob-ipython" scimax-dir))
-  :init
-  (add-to-list 'load-path
-	       (expand-file-name "ob-ipython" scimax-dir)))
+  :load-path scimax-dir)
+
+;; this is a git submodule
+(if (executable-find "jupyter")
+    (use-package ob-ipython
+      :ensure nil
+      :load-path (lambda () (expand-file-name "ob-ipython-upstream" scimax-dir))
+      :init (add-to-list 'load-path (expand-file-name "ob-ipython-upstream" scimax-dir))
+      (require 'ob-ipython))
+  (message "jupyter was not found on your path. ob-ipython was not loaded."))
+
+(use-package scimax-org-babel-ipython-upstream
+  :ensure nil
+  :load-path scimax-dir)
 
 (use-package ov)
 
@@ -357,10 +381,19 @@
 
 (use-package pdf-tools)
 
+(use-package org-mime
+  :ensure nil
+  :load-path (lambda () (expand-file-name "org-mime" scimax-dir))
+  :init (setq org-mime-up-subtree-heading 'org-back-to-heading
+	      org-mime-export-options '(:section-numbers nil
+							 :with-author nil
+							 :with-toc nil
+							 :with-latex dvipng)))
+
 ;; this is a git submodule
 (use-package org-ref
   :ensure nil
-  :load-path (lambda () (expand-file-name "org-ref " scimax-dir))
+  :load-path (lambda () (expand-file-name "org-ref" scimax-dir))
   :init
   (add-to-list 'load-path
 	       (expand-file-name "org-ref" scimax-dir))
@@ -376,13 +409,17 @@
   ;; (global-set-key (kbd "H-b") 'org-ref-bibtex-hydra/body)
   )
 
+(use-package org-ref-arxiv
+  :ensure nil
+  :load-path (lambda () (expand-file-name "org-ref" scimax-dir)))
+
 (use-package org-ref-scopus
   :ensure nil
-  :load-path (lambda () (expand-file-name "org-ref " scimax-dir)))
+  :load-path (lambda () (expand-file-name "org-ref" scimax-dir)))
 
 (use-package org-ref-wos
   :ensure nil
-  :load-path (lambda () (expand-file-name "org-ref " scimax-dir)))
+  :load-path (lambda () (expand-file-name "org-ref" scimax-dir)))
 
 
 ;; https://github.com/bbatsov/projectile
@@ -436,6 +473,11 @@
 ;; are right after one you cannot add a space without getting a new line.
 (use-package ws-butler)
 
+(use-package yasnippet)
+
+(unless (version-list-<= (version-to-list emacs-version) '(25 3 1))
+  (use-package ivy-yasnippet
+    :bind ("H-," . ivy-yasnippet)))
 
 ;; * Scimax packages
 (use-package scimax
@@ -520,13 +562,18 @@
   :ensure nil
   :load-path scimax-dir)
 
+(use-package scimax-yas
+  :ensure nil
+  :load-path scimax-dir)
+
 (use-package scimax-autoformat-abbrev
   :ensure nil
   :load-path scimax-dir)
 
-;; (use-package scimax-hydra
-;;   :ensure nil
-;;   :load-path scimax-dir)
+(use-package scimax-hydra
+  :ensure nil
+  :load-path scimax-dir
+  :bind ("<f12>" . scimax/body))
 
 (use-package kitchingroup
   :ensure nil
@@ -538,7 +585,8 @@
   :bind ("H-h" . ov-highlight/body)
   :init
   (add-to-list 'load-path
-	       (expand-file-name "ov-highlight" scimax-dir)))
+	       (expand-file-name "ov-highlight" scimax-dir))
+  (require 'ov-highlight))
 
 
 ;; * User packages

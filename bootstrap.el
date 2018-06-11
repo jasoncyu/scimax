@@ -2,11 +2,10 @@
 
 
 ;;; Commentary:
-;; 
+;;
 
 ;;; Code:
-
-(package-initialize)
+(unless package--initialized (package-initialize))
 
 (unless (package-installed-p 'diminish)
   (package-refresh-contents)
@@ -18,7 +17,6 @@
 
 (eval-when-compile
   (require 'use-package)
-  (package-refresh-contents)
   (when (and  (boundp 'scimax-package-refresh) scimax-package-refresh)
     (package-refresh-contents)))
 

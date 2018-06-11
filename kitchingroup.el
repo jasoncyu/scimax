@@ -37,7 +37,27 @@ report is for the previous week."
     (let ((default-directory (expand-file-name dir)))
       (ox-manuscript-new-helm "weekly-progress-report"))))
 
+
 (defalias 'kitchinhub-weekly-report 'kitchingroup-weekly-report)
+
+
+(defun kitchingroup-calendar ()
+  "Open the Kitchin Group Google calendar."
+  (interactive)
+  (browse-url "https://calendar.google.com/calendar?cid=NXE3aHRwMDZxazk3djltcHBzdHVwdmpkczRAZ3JvdXAuY2FsZW5kYXIuZ29vZ2xlLmNvbQ"))
+
+
+(defun kitchingroup-mail-archives ()
+  "Open the Kitchin group email archive in a browser."
+  (interactive)
+  (browse-url "https://lists.andrew.cmu.edu/mailman/private/kitchin-group/"))
+
+
+(defun kitchingroup-send-mail ()
+  "Send an email to the Kitchin group email list."
+  (interactive)
+  (compose-mail "kitchin-group@lists.andrew.cmu.edu")
+  (message-goto-subject))
 
 (provide 'kitchingroup)
 

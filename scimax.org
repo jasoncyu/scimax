@@ -1,4 +1,4 @@
-#+TITLE: Scimax
+#+TITLE: Scimax - The manual
 #+AUTHOR: John Kitchin
 #+DATE: 2016
 #+options: toc:nil
@@ -7,10 +7,14 @@
 
 Scimax is an Emacs starterkit designed for people interested in reproducible research and publishing. Scimax is just Emacs that has been configured extensively to make it act like we need it to for research documentation and publication. The notes below document some features we have built into scimax.
 
+Note: The org-mode version of this manual is the preferred version for reading; it is the most functional version, and the most up to date. The info:scimax version is also useful though, and you might prefer that one.
+
 * Org-mode
+
 scimax provides a lot of customization of org-mode. Here are some of the more important ones.
 
 ** Markup shortcuts
+
 scimax defines some shortcuts for org-mode markup. You can select text and type the shortcut to wrap the region in the markup, or if on a word, type the shortcut to wrap the word, or type the short cut to create the markup with the cursor inside it to keep typing.
 
 Note these modifier keys:
@@ -22,6 +26,73 @@ Note these modifier keys:
 | H | hyper    |
 
 Notation like s-b means press super and b together.
+
+super and Hyper aren't common on all keyboards, and using them is platform dependent. One good resource for configuring them is http://ergoemacs.org/emacs/emacs_hyper_super_keys.html.
+
+For Mac, I use:
+
+#+BEGIN_SRC emacs-lisp
+(setq mac-right-command-modifier 'hyper)
+(setq mac-right-option-modifier 'super)
+#+END_SRC
+
+For Windows you can use:
+
+#+BEGIN_SRC emacs-lisp
+(setq w32-pass-lwindow-to-system nil)
+(setq w32-lwindow-modifier 'super) ; Left Windows key
+
+(setq w32-pass-rwindow-to-system nil)
+(setq w32-rwindow-modifier 'super) ; Right Windows key
+
+(setq w32-pass-apps-to-system nil)
+(setq w32-apps-modifier 'hyper) ; Menu/App key
+#+END_SRC
+
+This does not work for all key combination with the Windows key because Windows intercepts some keys. The intercepted keys depend on the Windows version:
+
+| Key     | Windows 7 | Windows 10 |
+|---------+-----------+------------|
+| A       | +         | w          |
+| B       | w         | w          |
+| C       |           |            |
+| D       | w         | w          |
+| E       | w         | w          |
+| F       | w         | w          |
+| G       | +         | w          |
+| H       |           | w          |
+| I       | +         | w          |
+| J       | +         |            |
+| K       | +         | w          |
+| L       | w         | w          |
+| M       | w         | w          |
+| N       | +         | +          |
+| O       | +         |            |
+| P       | w         | w          |
+| Q       | +         | w          |
+| R       | w         | w          |
+| S       | +         | w          |
+| T       | w         | w          |
+| U       | w         | w          |
+| V       |           |            |
+| W       | +         | w          |
+| X       | +         | w          |
+| Y       | +         | +          |
+| Z       | +         |            |
+| 0 ... 9 | w         | w          |
+| +       | w         | w          |
+| -       | +         | +          |
+| _       | +         | +          |
+| .       | +         |            |
+| ,       | +         |            |
+| #       | +         |            |
+| *       | +         | +          |
+
+- + :: Key is available for Emacs
+- w :: Key is intercepted by Windows
+- empty :: No reaction from Emacs or Windows
+
+The following keyboard shortcuts are defined:
 
 | markup            | keyshortcut | emacs-command                       |
 |-------------------+-------------+-------------------------------------|
@@ -38,7 +109,7 @@ Notation like s-b means press super and b together.
 | @@latex:snippet@@ | C-u C-u 4   |                                     |
 | °                 | s-e         | `ivy-insert-org-entity'             |
 
-Use  `ivy-insert-org-entity' (s-e) for all accented characters.
+Use `ivy-insert-org-entity' (s-e) for all accented characters.
 
 ** Block expansions in org-mode
 
@@ -148,6 +219,13 @@ where resize-option is one of:
 | xN   | to set the height, keeping the aspect ratio constant.   |
 | NxM! | to set the width and height, ignoring the aspect ratio. |
 
+Note that you have to have a line like this in your init file for this to work. This is the default in scimax, and if you set it to t, then scaling will not work (since this variable when set to t says to use the actual image width).
+
+#+BEGIN_SRC emacs-lisp
+(setq org-image-actual-width nil)
+#+END_SRC
+
+
 Here are some examples.
 
 #+CAPTION: An unscaled image.
@@ -181,14 +259,17 @@ scimax defines these new speed commands that are active when the cursor is on th
 The best way to see other speed commands is to put your cursor at the beginning of a headline and press ?. You can also run `org-speed-command-help' to see a full list of speed commands.
 
 ** Formatted copy and paste
-`ox-clip-formatted-copy' provides a way to copy org-mode with formatting so it can be pasted into other programs like MS Word and web browsers. It does this by copying the selected text to the HTML clipboard.  
+
+`ox-clip-formatted-copy' provides a way to copy org-mode with formatting so it can be pasted into other programs like MS Word and web browsers. It does this by copying the selected text to the HTML clipboard.
 
 * Writing tools
 ** Spell-checking
 
-scimax is configured with flyspell and flycheck on. When you mispell a word it will be underlined in red, and you will see a message in the minibuffer that tells you how to fix it (C-;). Type that, and you will be able to fix the word spelling without losing your place! Not only that, but the correction will be saved as an abbreviation so it will auto correct every time you make the mistake again! Note this only works for single word corrections (i.e. the correction cannot be a two word correction).
+scimax is configured with flyspell and flycheck on. When you misspell a word it will be underlined in red, and you will see a message in the minibuffer that tells you how to fix it (C-;). Type that, and you will be able to fix the word spelling without losing your place! Not only that, but the correction will be saved as an abbreviation so it will auto correct every time you make the mistake again! Note this only works for single word corrections (i.e. the correction cannot be a two word correction).
 
 If the word is correct, you can type M-o s to save the word in your dictionary so you will not see it as misspelled again.
+
+Note: you need to have hunspell installed for this to work. On Windows, this should get installed into the scimax root directory in the emacs-win directory. For Mac and Linux, you need to install it using your package manager.
 
 ** Autoformat
 
@@ -244,7 +325,7 @@ You can see the abbreviations defined with this command elisp:edit-abbrevs.
 
 Scimax provides some support for track changes and edit marks in org-mode.
 
-[[insert:Add this text]] [[delete:Delete this]] 
+[[insert:Add this text]] [[delete:Delete this]]
  [[comment:A comment]]
 
 The markup is clickable, and clicking on it deletes the markup.
@@ -261,7 +342,7 @@ You can use these commands
 On an editmark you can:
 - `em-accept-edit-mark-at-point'
 - `em-reject-edit-mark-at-point'
-- `em-delete-edit-mark-at-point' 
+- `em-delete-edit-mark-at-point'
 
 -`em-typo' to mark a [[typo:tpyo]]
 
@@ -306,7 +387,7 @@ The commands all have key bindings. The prefix key for these is H-e.
 
 Scimax provides some support for highlighting, comment overlays, and edit marks.
 
-The main way to access the functions is via a hydra menu: `ov-highlighter/body' that is bound to H-h (hyper-h). 
+The main way to access the functions is via a hydra menu: `ov-highlighter/body' that is bound to H-h (hyper-h).
 
 The highlights are not part of org-mode, and they do not export to any backend. The highlights should work in any kind of file.
 
@@ -440,7 +521,7 @@ Here are the bibtex entry types and fields you should use. You can add extra fie
 	    (if (>= (length field) 2)
 		(princ (format " :: %s\n" (nth 1 field)))
 	      (princ "\n")))
-      
+
       (princ "\n**** Optional if Crossref present but otherwise required fields\n\n")
       (loop for field in crossref
 	    do
@@ -732,7 +813,7 @@ Here are the bibtex entry types and fields you should use. You can add extra fie
 - note
 
 ** Bibtex hotkeys
-   
+
 Scimax provides hotkeys for when your cursor is on the @ at the beginning of an entry. Here are the currently defined hotkeys.
 
 #+BEGIN_SRC emacs-lisp
@@ -780,7 +861,7 @@ scimax provides some tools to do a mail merge in org-mode. The idea is to run `m
 
 * Contacts
 
-scimax provides a emacs-lisp library to interface with a contact database written in org-mode. 
+scimax provides a emacs-lisp library to interface with a contact database written in org-mode.
 
 First, add some org-files to the variable `contacts-files'. Any headline in these files that has an EMAIL property will be considered a contact. Then, you can search your database with `ivy-contacts' or `helm-contacts'. There are a variety of actions to choose from ranging from inserting email addresses, copying properties, opening contact urls, etc...
 
@@ -858,6 +939,7 @@ Magit is a front-end for git version control. There is a good manual here: [[inf
   You can unstage a file with "u"
 
 *** Commit a file
+
   [[info:magit#Initiating%20a%20commit][info:magit#Initiating a commit]]
 
   [[info:magit#Editing%20commit%20messages][info:magit#Editing commit messages]]
@@ -865,11 +947,13 @@ Magit is a front-end for git version control. There is a good manual here: [[inf
   In the magit-status window with some files that are staged, press "c", review the options, and probably press "c" again. Enter a commit message and type "C-c C-c" to commit it, or "C-c C-k" to cancel it.
 
 *** Diffs
+
   [[info:magit#Diffing][info:magit#Diffing]]
 
   From the magit-status window, press "d" then "d" to see what has changed.
 
 *** See the log
+
   [[info:magit#Logging][info:magit#Logging]]
 
   In the magit-status window press "l", review the options, and press "l" again.
@@ -877,6 +961,7 @@ Magit is a front-end for git version control. There is a good manual here: [[inf
   If you want to see only the commits that affected a file, in the magit-status window press "l" then "=f", enter the filename, and then press "l" again.
 
 *** Push
+
   [[info:magit#Pushing][info:magit#Pushing]]
 
   In the magit-status window press "P" then "p".
@@ -884,10 +969,12 @@ Magit is a front-end for git version control. There is a good manual here: [[inf
   Note that tags don't normally get pushed, but there are options ("T" to push a tag, and "t" to push all tags).
 
 *** Pull
+
   [[info:magit#Pulling][info:magit#Pulling]]
   In the magit-status window press "F" then "p".
 
 *** Run a command-line git command manually
+
   [[info:magit#Running%20Git%20manually][info:magit#Running Git manually]]
   In the magit-status window, type "!" to get the popup and choose what you want to do (e.g. where to run the command, etc... You do not need to type "git" in the command. Note you can also run a shell command from this interface.
 
@@ -896,6 +983,7 @@ Magit is a front-end for git version control. There is a good manual here: [[inf
   Press "$"
 
 *** Keybindings
+
   [[info:magit#Keystroke%20Index][info:magit#Keystroke Index]]
 
 ** Intermediate concepts
@@ -903,7 +991,7 @@ Magit is a front-end for git version control. There is a good manual here: [[inf
 
   Use M-x magit-checkout-file select the branch, or enter a revision, and then choose a file.
 
- help:magit-checkout-file 
+ help:magit-checkout-file
 
  help:magit-find-file
  help:magit-find-file-other-window
@@ -913,15 +1001,18 @@ Magit is a front-end for git version control. There is a good manual here: [[inf
 In a magit-status window press "l =g" enter a pattern to grep for, and then press "l".
 
 *** Revert a commit
- [[info:magit#Reverting][info:magit#Reverting]]
+
+  [[info:magit#Reverting][info:magit#Reverting]]
 
   Got to the log, select the commit and type "V" then "V".
 *** Tag a version
+
   [[info:magit#Tagging][info:magit#Tagging]]
 
   press "t" in the magit-status window. You can then create a tag, annotate it, delete tags, and prune them.
 
 *** Checkout an existing branch.
+
   [[info:magit#The%20branch%20popup][info:magit#The branch popup]]
 
   In the magit-status window press "b" then "b" and choose the branch.
@@ -929,11 +1020,13 @@ In a magit-status window press "l =g" enter a pattern to grep for, and then pres
   To checkout a new branch, in the magit-status window press "b" then "c". Choose the branch to start from then a name for the new branch.
 
 *** Merge two branches
+
   [[info:magit#Merging][info:magit#Merging]]
 
   In the magit-status window press "m", then "m" and select the branch to merge into the current one.
 
 *** TODO Resolving conflicts
+
  [[info:magit#Resolving%20conflicts][info:magit#Resolving conflicts]]
 
  You will probably also want to get familiar with [[info:ediff#Top][info:ediff#Top]].
@@ -941,17 +1034,20 @@ In a magit-status window press "l =g" enter a pattern to grep for, and then pres
  On a file in a magit-status window, press "e" to enter the 3-window ediff view. The A window is the version at HEAD, the B window is what is in the index, and the C window is the current version.
 
 *** Fetching
+
  [[info:magit#Fetching][info:magit#Fetching]]
 
  In the magit-status window press "f".
 
 *** Add a remote
+
   [[info:magit#Remotes][info:magit#Remotes]]
 
   M-x magit-remote-add
   then enter an alias, and the url.
 
 *** Stashing
+
  [[info:magit#Stashing][info:magit#Stashing]]
 
  Press "z" in the magit-status window
@@ -960,35 +1056,44 @@ In a magit-status window press "l =g" enter a pattern to grep for, and then pres
 
 ** Advanced concepts
 *** Resetting
+
  [[info:magit#Resetting][info:magit#Resetting]]
 
-*** Rebasing 
+*** Rebasing
+
   [[info:magit#Rebasing][info:magit#Rebasing]]
 
 **** Interactve rebasing
-  Open the log, select the oldest commit you want to rebase on then press "r" and then "i". Use M-p and M-n to move commits around. Press "s" on any commits you want to squash into the commit above it. C-c C-c will start the commands.
+
+ Open the log, select the oldest commit you want to rebase on then press "r" and then "i". Use M-p and M-n to move commits around. Press "s" on any commits you want to squash into the commit above it. C-c C-c will start the commands.
 
   From the magit-status on unpushed commits, you can also press "r" to get the rebase popup.
 
 **** Reword a commit message
+
   "r w" allows you to reword the commit message.
 
 *** Create patches
+
   [[info:magit#Creating%20and%20sending%20patches][info:magit#Creating and sending patches]]
 
   In magit-status window, press "W"
 
   "W p" creates patches
   "W r" makes a pull request. This just creates an email with information in it. It is not a GitHUB request, and it is only useful if there is a public, external copy of the repo.
-*** Cherry-picking 
+
+*** Cherry-picking
+
  [[info:magit#Cherry%20picking][info:magit#Cherry picking]]
 
  Press "A"
 
 *** Apply patches
+
   [[info:magit#Applying%20patches][info:magit#Applying patches]]
 
 *** Notes about commits
+
   [[info:magit#Notes][info:magit#Notes]]
 
   Press "T" to attach a note.
@@ -1000,7 +1105,8 @@ In a magit-status window press "l =g" enter a pattern to grep for, and then pres
 	  unindented line saying "Notes (<refname>):" (or "Notes:" for
 	  refs/notes/commits).
 
-*** Cherry-picking 
+*** Cherry-picking
+
  [[info:magit#Cherry%20picking][info:magit#Cherry picking]]
 
 * Project management - projectile
@@ -1020,11 +1126,13 @@ While in a project, you may want to try:
 
 * Programming
 ** Python
+
 - scimax is setup with `elpy-mode'.
 - `pydoc' provides nice, hyperlinked documentation for python.
 
 ** Asynchronous Python
-You can run python blocks asynchronously with M-x `org-babel-async-execute:python' with the cursor in a code block. This will allow you to keep typing, and show you a buffer with the progress of your code block. When it is done, the results will be inserted into the buffer where it belongs when the job is done. A temporary hash mark will go in the results. 
+
+You can run python blocks asynchronously with M-x `org-babel-async-execute:python' with the cursor in a code block. This will allow you to keep typing, and show you a buffer with the progress of your code block. When it is done, the results will be inserted into the buffer where it belongs when the job is done. A temporary hash string will go in the results. That hash will be replaced when the calculation is done.
 
 You can make this the default behavior by adding this to your init file:
 
@@ -1041,7 +1149,7 @@ Pygments doesn't support ipython out of the box for some reason, which is a prob
 
 ob-ipython allows you to use Ipython magic commands in your src blocks. Here is a protypical Ipython src block with a line magic.
 
-#+BEGIN_SRC ipython :session
+#+BEGIN_SRC ipython 
 %time print("hello world")
 a = 6
 #+END_SRC
@@ -1053,29 +1161,16 @@ a = 6
 
 And a block with cell magic.
 
-#+BEGIN_SRC ipython :session
+#+BEGIN_SRC ipython 
 %%timeit
 7
 #+END_SRC
 
-- `ob-ipython-inspect' seems to be broken
-
-- `org-babel-switch-to-session' will open the IPython REPL.
-
-M-x `ob-ipython-interrupt-kernel'
-M-x `ob-ipython-kill-kernel'
-
 *** Scimax enhancements to ob-ipython
 
-We have made a few improvements to ob-ipython. Inline images are supported now similar to how they are supported in the Jupyter notebook. You specify the %matplotlib inline magic, and then plots will appear "inline" along with any output from your cell block. The plots are saved in a directory ipython-inline-images in filenames derived from and md5 hash of the image. You can have more than one image, and you also get the output from your block, similar to the way the Jupyter notebook behaves.
+We have made a few improvements to ob-ipython (see [[./scimax-ipython.org]] for much more detail). Inline images are supported now similar to how they are supported in the Jupyter notebook. You specify the %matplotlib inline magic, and then plots will appear "inline" along with any output from your cell block. The plots are saved in a directory ipython-inline-images in filenames derived from and md5 hash of the image. You can have more than one image, and you also get the output from your block, similar to the way the Jupyter notebook behaves.
 
-You need a header like this, i.e. you need to specify the results as output, and for them to be in a drawer so that org-mode can display the file links.
-
-#+BEGIN_EXAMPLE
-,#+BEGIN_SRC ipython :session :results output drawer
-#+END_EXAMPLE
-
-#+BEGIN_SRC ipython :session :results output drawer
+#+BEGIN_SRC ipython 
 print('Hello world!')
 
 %matplotlib inline
@@ -1166,8 +1261,7 @@ As with the Jupyter notebook, only the last returned cell is rendered.
 
 We finally have asynchronous execution of ipython blocks. This allows you to run a block, and keep working in Emacs. A temporary string is inserted into the results which is replaced when the code is done running. This command will make a clickable link to interrupt the kernel, or cancel the cell running. This will put names on every src block if they are not already named.
 
-#+NAME: bb21dabd-acb3-46bd-b8d8-ab174834fc37
-#+BEGIN_SRC ipython :session :results output drawer 
+#+BEGIN_SRC ipython :async
 import time
 time.sleep(5)
 #print(8)
@@ -1185,16 +1279,25 @@ plt.ylabel('y')
 plt.title('Decaying spiral')
 #+END_SRC
 
-#+RESULTS: bb21dabd-acb3-46bd-b8d8-ab174834fc37
+#+RESULTS:
 :RESULTS:
+# Out[1]:
+# text/plain
+: Text(0.5,1,'Decaying spiral')
 
-[[file:ipython-inline-images/ob-ipython-f7122a4c0570fc3bf4ef580b97d5c1ae.png]]
+# text/plain
+: <Figure size 432x288 with 1 Axes>
+
+# image/png
+[[file:obipy-resources/scratch-TIEvXF.png]]
 :END:
+
 
 You can run all the blocks asynchronously with `org-babel-execute-ipython-buffer-async'. You can clear the queue `org-babel-async-ipython-clear-queue'.
 
 
 *** Export org to ipynb
+
 Finally, we can export org-mode files to Jupyter notebooks with the ox-ipynb library. If you load the library, there is a new export option in the export menu with the letter "n". Or you can use  `ox-ipynb-export-to-ipynb-file-and-open'.
 
 
@@ -1216,8 +1319,9 @@ scimax provides the jupyter-hy src block to run hylang in src blocks. The requir
 
 
 ** Emacs-lisp
+
 - `lispy-mode' is just amazing.
-- `scimax-org-eldoc' will generate documentation on elisp libraries in an org-mode format.
+- `scimax-org-eldoc' will generate documentation on elisp libraries in an org-mode format. It is a library you have to require.
 
 * RSS feeds
 
@@ -1333,7 +1437,6 @@ There are a few undo features:
 | C-/   | undo the last action          |
 | C-x u | use the undo-tree (q to quit) |
 
-
 * Scientific notebook
 
 scimax provides a scientific notebook capability. Each "notebook" is actually collection of org-files in a "project". A project is the set of files in a directory that is under git version control. Each project should have a master file (the default is README.org, but you can customize `nb-master-file' to change this). The master file contains what ever you want, but typically it links to other documents in the project and provides an overview of the project.
@@ -1374,8 +1477,11 @@ scimax defines these additional key bindings:
 | C-x v p | git push |
 | C-x v P | git pull |
 
-** TODO archive the notebook with git
+** Archive the notebook with git
 
+Sometimes you may want a zip file of your notebook. You can use the `nb-archive' command to create a zip file of the current state of your notebook. This can be useful to back up versions of your project, send copies to collaborators who don't use git, or to create archives for data sharing and supporting information.
+
+Note that only files under version control are archived, and only the current committed state is archived. So, uncommitted files and changes will not be included.
 
 * ivy/counsel
 
@@ -1430,6 +1536,7 @@ Here are some additional actions we define for `counsel-find-file'.
 | l   | relative org link    |
 | L   | absolute org link    |
 | r   | rename file          |
+
 * scimax-hydras
 
 Scimax uses a central hydra to launch a key-driven menu of commonly used commands.
@@ -1485,14 +1592,13 @@ The body can be accessed via ‘scimax/body’.
 
 So, instead of C-x C-f to open a file (which still works by the way) you can simply type: f12 ff. Or instead of C-x C-s to save the file, type f12 RET. Each hydra will show you a hint in the minibuffer on which keys do what.
 
-
 * Appendix
 
 `scimax-help' will open this document.
 
 ** Emacs
 
-Emacs is described as "self-documenting", and it provides a lot of introspective ways to access documentation. A classic way to access help is via "info" pages. These are hyperlinked documents containing a lot of detail about Emacs and its libraries. 
+Emacs is described as "self-documenting", and it provides a lot of introspective ways to access documentation. A classic way to access help is via "info" pages. These are hyperlinked documents containing a lot of detail about Emacs and its libraries.
 
 Emacs-manual: info:Emacs
 
@@ -1547,14 +1653,27 @@ In org-mode the `ore' command will give you information about the org-element un
 
 *** How do I learn shortcuts?
 
-If you use the menus, they will often have the shortcut in the menu. 
+If you use the menus, they will often have the shortcut in the menu.
 
 The help functions usually show you if a shortcut is defined for a command.
 
-If you really want to define your own keys, see `define-key' and `global-set-key'. 
+If you really want to define your own keys, see `define-key' and `global-set-key'.
 
 Make yourself some notes in org-mode using `emacs-keybinding-command-tooltip-mode'.
 
+** Using only parts of scimax
+
+Suppose you have your own Emacs setup already and only want to use a few parts of scimax without loading the whole thing. No problem. Just add the scimax dir to your load-path, and require as you like.
+
+For example, to just use the scimax ipython enhancements (https://github.com/jkitchin/scimax/issues/191#issuecomment-378758214), this might work:
+
+#+BEGIN_SRC emacs-lisp
+(add-to-list 'load-path "path/to/scimax-dir")
+(require 'ob-ipython)
+(require 'scimax-org-babel-ipython-upstream)
+#+END_SRC
+
+Note that a lot of packages are installed in [[./packages.el]] and you may have to inspect the source of the packages you are requiring to make sure all the dependencies get installed.
 
 * Archive
 ** Navigation - navy
@@ -1605,6 +1724,16 @@ I bind this to a key like "f9" and set it up to easily open my mail, calendar an
 		  (org-open-file
 		   "/Users/jkitchin/Dropbox/CMU/CV and bios/kitchin_cv.docx" '(16))))))
 #+END_SRC
+
+* Export the info manual                                           :noexport:
+
+#+BEGIN_SRC emacs-lisp
+(require 'ox-texinfo)
+(org-texinfo-export-to-info)
+#+END_SRC
+
+#+RESULTS:
+: /Users/jkitchin/vc/jkitchin-github/scimax/scimax.info
 
 * Local Variables                                                  :noexport:
 

@@ -68,7 +68,7 @@ one and open it."
     ("org-mode"
      ["Toggle symbols" org-toggle-pretty-entities t]
      ["Toggle inline images" org-toggle-inline-images t]
-     ["Toggle LaTeX images" org-toggle-latex-overlays t]
+     ["Toggle LaTeX images" org-toggle-latex-fragment t]
      ("Markup"
       ["Bold" bold-region-or-point t]
       ["Italics" italics-region-or-point]
@@ -126,6 +126,7 @@ one and open it."
      ["Lookup in Arxiv" words-arxiv]
      ["Lookup in Dictionary" words-dictionary t]
      ["Lookup in Thesaurus" words-thesaurus t])
+    ["Update scimax" scimax-update t]
     ["Help with scimax" scimax-help t]
     ["Customize user.el" scimax-customize-user t]))
 
